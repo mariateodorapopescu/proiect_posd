@@ -1,0 +1,10 @@
+.env
+uploads/
+target/
+*.class
+__pycache__/
+.venv/
+*.pyc
+.idea/
+.vscode/
+.DS_Store
