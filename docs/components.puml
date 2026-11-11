@@ -1,0 +1,37 @@
+@startuml
+title SecureSync - diagrama de componente
+skinparam componentStyle uml2
+
+node "Browser" {
+  component "Documente\nReact + oidc-client-ts\nlocalhost:3001" as Documents
+  component "Portal\nReact + oidc-client-ts\nlocalhost:3002" as Portal
+}
+node "Docker Compose" {
+  component "Keycloak 26.8.2\nRealm securesync" as Keycloak
+  database "PostgreSQL 16\nidentitati si sesiuni" as IdentityDb
+  component "API Spring Boot 3.5.8\nJava 21" as Api {
+    component "Resource server\nJWT local / introspectie" as Security
+    component "Politica\nscope -> rol -> proprietar/departament" as Policy
+    component "Serviciu documente" as DocumentService
+    component "Administrare membri\nIMPLEMENTATOR + members:manage\nrol curent verificat online" as Members
+  }
+  database "PostgreSQL 16\nmetadate documente" as DocumentsDb
+  artifact "Volum PDF privat\nfara ruta publica" as Pdf
+}
+component "Experiment Python 3.12+\nmeasure.py / analyze.py" as Experiment
+
+Documents --> Keycloak : Authorization Code + PKCE S256
+Portal --> Keycloak : Authorization Code + PKCE / SSO
+Documents --> Security : REST + Bearer token
+Portal --> Security : REST + Bearer token
+Security --> Keycloak : JWKS / introspectie per cerere
+Security --> Policy : identitate validata
+Security --> Members : identitate validata + scope / rol
+Members --> Keycloak : Admin REST cu client tehnic separat
+Policy --> DocumentService : acces permis
+DocumentService --> DocumentsDb : JPA / JDBC
+DocumentService --> Pdf : citire / scriere
+Keycloak --> IdentityDb : JDBC
+Experiment --> Keycloak : PKCE si Admin API: revocare sid
+Experiment --> Security : cereri cu acelasi token
+@enduml

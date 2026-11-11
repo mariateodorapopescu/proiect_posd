@@ -1,0 +1,13 @@
+# Workflows
+
+Login redirects to Keycloak Authorization Code + PKCE; callback validates state through oidc-client-ts, keeps token in memory, cleans callback URL. Login to the other app reuses SSO via a redirect. Page reload clears local tokens and needs login redirect again. Logout redirects to Keycloak and clears local state. No automatic token refresh.
+
+Each login sends an explicit random OIDC nonce, validated when oidc-client-ts processes the ID token. Documente requests openid documents:read documents:write; Portal additionally requests members:manage. Identity claims come from securesync-claims, so no unassigned profile scope is requested.
+
+Documente loads visible documents, posts multipart title+file, fetches downloads with Authorization and deletes only owner/admin documents. Portal shows authenticated /api/me claims and API probes. UI stale-request guards bind results to the captured session.
+
+Experiment obtains a token through browser PKCE or a private env/file token for one run, validates /api/me strategy/identity, probes200 baseline, obtains admin client_credentials, deletes exactly the sid session, timestamps successful204 and polls with unchanged token until five consecutive401/403. Network/5xx/unexpected responses are invalid, timeout censored. Switching profiles requires compose up --force-recreate api; restarting alone doesn't apply env changes.
+
+Windows launcher: SecureSync.bat opens a menu or accepts start/stop/status. scripts/manage-app.ps1 validates the action, binds Compose to this exact directory/project securesync, starts installed Docker Desktop if needed (180s bound), initializes only a missing .env, runs compose up -d --build and waits for the four public HTTP endpoints (120s bound) before opening Documente/Portal. -NoBrowser suppresses only browser opening. Stop uses compose down --remove-orphans, keeps volumes/.env and does not stop the Docker engine or other projects. See docs/launcher.md.
+
+Portal requests members:manage in addition to its document scopes and shows Administrare membri only for IMPLEMENTATOR+scope. Login implementator.demo with the demo password, select the tab, search a member, edit role checkboxes/department and save. Newly granting ADMIN/IMPLEMENTATOR asks for explicit review/confirmation. Own row is read-only. Unsaved row drafts remain in memory while switching tabs; search/paging/reload requests confirmation before discarding. USER/ADMIN-only accounts have no management tab and are denied by API. Recipients reauthenticate for fresh claims; the management API separately rechecks live IMPLEMENTATOR permission on every call.

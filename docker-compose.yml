@@ -1,0 +1,116 @@
+name: securesync
+
+services:
+  keycloak-db:
+    image: postgres:16.11-alpine
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: ${KEYCLOAK_DB_PASSWORD:?Run scripts/init-env.ps1 first}
+    volumes:
+      - keycloak-db:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U keycloak -d keycloak']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api-db:
+    image: postgres:16.11-alpine
+    environment:
+      POSTGRES_DB: securesync
+      POSTGRES_USER: securesync
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run scripts/init-env.ps1 first}
+    volumes:
+      - api-db:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U securesync -d securesync']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.8.2
+    command: [start-dev, --import-realm]
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:?Required}
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?Required}
+      KC_HOSTNAME: http://localhost:8080
+      KC_HTTP_ENABLED: 'true'
+      KC_HEALTH_ENABLED: 'true'
+      INTROSPECTION_CLIENT_SECRET: ${INTROSPECTION_CLIENT_SECRET:?Required}
+      EXPERIMENT_ADMIN_CLIENT_SECRET: ${EXPERIMENT_ADMIN_CLIENT_SECRET:?Required}
+      MEMBER_ADMIN_CLIENT_SECRET: ${MEMBER_ADMIN_CLIENT_SECRET:?Run python scripts/configure-members.py for existing installs}
+      DEMO_USER_PASSWORD: ${DEMO_USER_PASSWORD:?Required}
+    ports:
+      - '127.0.0.1:8080:8080'
+    volumes:
+      - ./keycloak/realm-export.json:/opt/keycloak/data/import/securesync-realm.json:ro
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, bash, -ec, 'exec 3<>/dev/tcp/127.0.0.1/9000; printf "GET /health/ready HTTP/1.0\r\n\r\n" >&3; grep -q "200 OK" <&3']
+      interval: 5s
+      timeout: 3s
+      start_period: 45s
+      retries: 30
+
+  api:
+    build: ./api
+    environment:
+      SPRING_PROFILES_ACTIVE: ${TOKEN_VALIDATION_STRATEGY:-jwt}
+      DB_URL: jdbc:postgresql://api-db:5432/securesync
+      DB_USER: securesync
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?Required}
+      OIDC_ISSUER: http://localhost:8080/realms/securesync
+      OIDC_JWK_SET_URI: http://keycloak:8080/realms/securesync/protocol/openid-connect/certs
+      OIDC_INTROSPECTION_URI: http://keycloak:8080/realms/securesync/protocol/openid-connect/token/introspect
+      OIDC_AUDIENCE: securesync-api
+      INTROSPECTION_CLIENT_ID: securesync-api
+      INTROSPECTION_CLIENT_SECRET: ${INTROSPECTION_CLIENT_SECRET:?Required}
+      CORS_ORIGINS: http://localhost:3001,http://localhost:3002
+      MEMBER_ADMIN_BASE_URL: http://keycloak:8080/admin/realms/securesync
+      MEMBER_ADMIN_TOKEN_URL: http://keycloak:8080/realms/securesync/protocol/openid-connect/token
+      MEMBER_ADMIN_CLIENT_ID: securesync-member-admin
+      MEMBER_ADMIN_CLIENT_SECRET: ${MEMBER_ADMIN_CLIENT_SECRET:?Required}
+      STORAGE_ROOT: /data/pdfs
+      SERVER_PORT: 8081
+    ports:
+      - '127.0.0.1:8081:8081'
+    volumes:
+      - pdf-storage:/data/pdfs
+    depends_on:
+      api-db:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+
+  documente:
+    build:
+      context: ./web
+      args:
+        APP_NAME: documente
+    ports:
+      - '127.0.0.1:3001:80'
+    depends_on:
+      - api
+
+  portal:
+    build:
+      context: ./web
+      args:
+        APP_NAME: portal
+    ports:
+      - '127.0.0.1:3002:80'
+    depends_on:
+      - api
+
+volumes:
+  keycloak-db:
+  api-db:
+  pdf-storage:

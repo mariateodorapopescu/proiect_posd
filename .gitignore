@@ -8,3 +8,10 @@ __pycache__/
 .idea/
 .vscode/
 .DS_Store
+node_modules/
+dist/
+.local/
+api/storage/
+experiment/data/*.csv
+experiment/data/*.png
+experiment/data/*.json

@@ -1,0 +1,36 @@
+server:
+  port: ${SERVER_PORT:8081}
+  error:
+    include-message: never
+    include-stacktrace: never
+spring:
+  application:
+    name: securesync-api
+  profiles:
+    default: jwt
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/securesync}
+    username: ${DB_USER:securesync}
+    password: ${DB_PASSWORD}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 11MB
+app:
+  issuer: ${OIDC_ISSUER:http://localhost:8080/realms/securesync}
+  jwk-set-uri: ${OIDC_JWK_SET_URI:http://localhost:8080/realms/securesync/protocol/openid-connect/certs}
+  audience: ${OIDC_AUDIENCE:securesync-api}
+  token-strategy: jwt
+  storage-root: ${STORAGE_ROOT:./storage}
+  cors-origins: ${CORS_ORIGINS:http://localhost:3001,http://localhost:3002}
+  members:
+    base-url: ${MEMBER_ADMIN_BASE_URL:http://localhost:8080/admin/realms/securesync}
+    token-url: ${MEMBER_ADMIN_TOKEN_URL:http://localhost:8080/realms/securesync/protocol/openid-connect/token}
+    client-id: ${MEMBER_ADMIN_CLIENT_ID:securesync-member-admin}
+    client-secret: ${MEMBER_ADMIN_CLIENT_SECRET:}

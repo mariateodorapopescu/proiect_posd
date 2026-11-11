@@ -1,0 +1,26 @@
+{
+  "name": "securesync-web",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev:documente": "vite --mode documente --host 0.0.0.0 --port 3001",
+    "dev:portal": "vite --mode portal --host 0.0.0.0 --port 3002",
+    "typecheck": "tsc --noEmit",
+    "build": "npm run typecheck && vite build --mode documente && vite build --mode portal",
+    "test": "node --test tests/*.test.mjs",
+    "test:oidc": "node scripts/verify-oidc.mjs"
+  },
+  "dependencies": {
+    "oidc-client-ts": "3.5.0",
+    "react": "19.2.9",
+    "react-dom": "19.2.9"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "5.1.4",
+    "typescript": "5.9.3",
+    "vite": "7.3.8"
+  }
+}

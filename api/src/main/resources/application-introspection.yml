@@ -1,0 +1,5 @@
+app:
+  token-strategy: introspection
+  introspection-uri: ${OIDC_INTROSPECTION_URI:http://localhost:8080/realms/securesync/protocol/openid-connect/token/introspect}
+  introspection-client-id: ${INTROSPECTION_CLIENT_ID:securesync-api}
+  introspection-client-secret: ${INTROSPECTION_CLIENT_SECRET}
