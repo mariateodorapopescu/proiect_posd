@@ -65,7 +65,10 @@ public class SecurityConfiguration {
             @Value("${app.introspection-client-id}") String clientId,
             @Value("${app.introspection-client-secret}") String secret,
             @Value("${app.issuer}") String issuer, @Value("${app.audience}") String audience) {
-        var factory = new JdkClientHttpRequestFactory(HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3)).build());
+        // HTTP/1.1 on purpose: with the JDK default (HTTP/2) the introspection calls share few connections and,
+        // under concurrent load, fail with "too many concurrent streams" (surfacing as 401 via /error).
+        var factory = new JdkClientHttpRequestFactory(HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1)
+                .connectTimeout(Duration.ofSeconds(3)).build());
         factory.setReadTimeout(Duration.ofSeconds(3));
         RestTemplate rest = new RestTemplate(factory);
         rest.getInterceptors().add(new BasicAuthenticationInterceptor(clientId, secret));
