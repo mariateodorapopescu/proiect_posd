@@ -33,8 +33,26 @@ def finite_number(value):
 def distribution(values):
     return {"n": len(values), "min": min(values) if values else None,
             "p50": quantile(values, 0.5), "p95": quantile(values, 0.95),
+            "p99": quantile(values, 0.99),
             "max": max(values) if values else None,
             "mean": statistics.fmean(values) if values else None}
+
+
+def ecdf(values):
+    """Empirical CDF as sorted values and their cumulative probabilities (right-continuous steps)."""
+    ordered = sorted(values)
+    count = len(ordered)
+    return {"values": ordered, "cumulative_probability": [(index + 1) / count for index in range(count)]}
+
+
+def denial_pairs(group):
+    """(token lifetime left at revocation, time to deny) for confirmed denials that record both."""
+    pairs = []
+    for row in group:
+        if row["outcome"] != "denied" or not row.get("remaining_at_revoke_s"):
+            continue
+        pairs.append([finite_number(row["remaining_at_revoke_s"]), finite_number(row["time_to_deny_s"])])
+    return pairs
 
 
 def bootstrap_median_ci(values, repetitions=2000, seed=2026):
@@ -90,6 +108,10 @@ def analyze(runs, samples, bootstrap=2000):
         "invalid": "Network errors, unexpected HTTP responses or failed baseline; excluded from latency and denial summaries",
         "latency": "Pooled baseline HTTP-200 latencies; medians per run are also reported",
         "bootstrap": "Percentile 95% CI of median, resampling runs; fixed random seed 2026",
+        "p99": "Interpolated quantile; it is informative only with about 100 or more confirmed runs, so read it with n",
+        "ecdf": "Empirical CDF of confirmed time-to-deny values; censored and invalid runs are not included",
+        "denial_minus_remaining_s": "Time to deny minus token lifetime left at revocation: near 0 or slightly positive "
+                                    "when the token is refused only at expiry, clearly negative when refused earlier",
     }, "groups": []}
     # TTL is part of the grouping: combining different token lifetimes would distort revocation comparisons.
     keys = sorted({(r["strategy"], int(finite_number(r["token_ttl_s"]))) for r in runs})
@@ -103,6 +125,8 @@ def analyze(runs, samples, bootstrap=2000):
                 baseline_by_run[row["run_id"]].append(finite_number(row["latency_ms"]))
         baseline = [value for values in baseline_by_run.values() for value in values]
         medians = [statistics.median(values) for values in baseline_by_run.values() if values]
+        pairs = denial_pairs(group)
+        offsets = [deny - remaining for remaining, deny in pairs]
         group_output = {
             "strategy": strategy, "token_ttl_s": ttl, "runs_total": len(group),
             "runs_denied": sum(r["outcome"] == "denied" for r in group),
@@ -110,6 +134,11 @@ def analyze(runs, samples, bootstrap=2000):
             "runs_invalid": sum(r["outcome"] == "invalid" for r in group),
             "time_to_deny_s": distribution(denied),
             "median_time_to_deny_95pct_ci_s": bootstrap_median_ci(denied, bootstrap),
+            "time_to_deny_ecdf": ecdf(denied),
+            "denial_vs_remaining_s": pairs,
+            "denial_minus_remaining_s": {"n": len(offsets), "min": min(offsets) if offsets else None,
+                                         "p50": quantile(offsets, 0.5),
+                                         "max": max(offsets) if offsets else None},
             "baseline_request_latency_ms": distribution(baseline),
             "baseline_median_per_run_ms": distribution(medians),
             "median_baseline_run_latency_95pct_ci_ms": bootstrap_median_ci(medians, bootstrap),
@@ -156,11 +185,50 @@ def save_plot(summary, path: Path):
     plt.close(figure)
 
 
+def save_ecdf_plot(summary, path: Path):
+    """ECDF of time-to-deny per group, and time-to-deny against token lifetime left at revocation."""
+    try:
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+    except ImportError:
+        raise ValueError("Install matplotlib to use --ecdf-plot") from None
+    groups = [group for group in summary["groups"] if group["time_to_deny_ecdf"]["values"]]
+    if not groups:
+        raise ValueError("No confirmed denials available to plot")
+    figure, (cdf_axis, pair_axis) = plt.subplots(1, 2, figsize=(11, 4.8), layout="constrained")
+    for group in groups:
+        label = f"{group['strategy']}, TTL {group['token_ttl_s']}s (n={group['time_to_deny_s']['n']})"
+        cdf = group["time_to_deny_ecdf"]
+        cdf_axis.step(cdf["values"], cdf["cumulative_probability"], where="post", label=label)
+        if group["denial_vs_remaining_s"]:
+            remaining, deny = zip(*group["denial_vs_remaining_s"])
+            pair_axis.scatter(remaining, deny, s=14, alpha=0.7, label=label)
+    cdf_axis.set(title="ECDF of time to deny (confirmed runs)", xlabel="seconds",
+                 ylabel="cumulative probability", ylim=(0, 1.02))
+    cdf_axis.set_xlim(left=0)
+    cdf_axis.grid(alpha=0.25)
+    cdf_axis.legend(fontsize=8)
+    limit = max([point for group in groups for pair in group["denial_vs_remaining_s"] for point in pair] or [1])
+    pair_axis.plot([0, limit], [0, limit], linestyle="--", linewidth=1, color="gray",
+                   label="denied exactly at token expiry")
+    pair_axis.set(title="Time to deny vs lifetime left at revocation", xlabel="lifetime left (s)",
+                  ylabel="time to deny (s)")
+    pair_axis.set_xlim(left=0)
+    pair_axis.set_ylim(bottom=0)
+    pair_axis.grid(alpha=0.25)
+    pair_axis.legend(fontsize=8)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    figure.savefig(path, dpi=160)
+    plt.close(figure)
+
+
 def main(argv=None):
     cli = argparse.ArgumentParser(description=__doc__)
     cli.add_argument("inputs", type=Path, nargs="*", default=[Path(__file__).resolve().parent / "data"])
     cli.add_argument("--output", type=Path, help="Write JSON summary")
     cli.add_argument("--plot", type=Path, help="Write comparison PNG; needs matplotlib")
+    cli.add_argument("--ecdf-plot", type=Path, help="Write ECDF and denial-vs-lifetime PNG; needs matplotlib")
     cli.add_argument("--bootstrap", type=int, default=2000)
     args = cli.parse_args(argv)
     if args.bootstrap < 100:
@@ -173,6 +241,8 @@ def main(argv=None):
         text = json.dumps(summary, ensure_ascii=False, indent=2, allow_nan=False)
         if args.plot:
             save_plot(summary, args.plot)
+        if args.ecdf_plot:
+            save_ecdf_plot(summary, args.ecdf_plot)
         if args.output:
             args.output.parent.mkdir(parents=True, exist_ok=True)
             args.output.write_text(text + "\n", encoding="utf-8")

@@ -15,3 +15,8 @@ api/storage/
 experiment/data/*.csv
 experiment/data/*.png
 experiment/data/*.json
+
+# Raw experiment output in subfolders (jwt/, introspection/, load/) is never committed
+experiment/data/**/*.csv
+experiment/data/**/*.json
+experiment/data/**/*.png

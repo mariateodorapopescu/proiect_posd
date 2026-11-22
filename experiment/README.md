@@ -38,7 +38,7 @@ Se deschide browserul pentru autentificare. Scriptul preia codul printr-un serve
 temporar legat exclusiv de loopback, verifică `state` și schimbă codul folosind
 verificatorul PKCE păstrat în memorie. Pentru fiecare repetare se obține o sesiune
 nouă; revocarea închide sesiunea SSO, deci poate fi necesară autentificarea din nou.
-Nu există autentificare automată prin parole stocate în script.
+`measure.py` nu are autentificare automată prin parole stocate în script; autentificarea fără browser există numai în `batch.py`, descrisă mai jos.
 
 Repornește **același API și aceeași bază de date** cu profilul `introspection`,
 conform instrucțiunilor principale, și repetă:
@@ -62,6 +62,100 @@ afara repository-ului. Nu folosi simultan cele două variante. Un token furnizat
 suportă o singură repetare și trebuie să fie încă valid, emis pentru realm-ul și
 audiența configurate. Decodarea locală extrage doar metadatele; autentificarea este
 verificată de API înainte de apelul administrativ.
+
+## Colectare automată cu repetări multe (`batch.py`)
+
+`measure.py` deschide browserul la fiecare repetare, deci nu este practic pentru serii de
+zeci sau sute de repetări. `batch.py` repetă aceeași măsurătoare fără browser. Pentru fiecare
+repetare se autentifică într-o sesiune Keycloak nouă (Authorization Code cu PKCE S256,
+completând formularul de login local), așteaptă o fracțiune aleatoare din durata de viață a
+tokenului și apoi apelează `measure.measure_run` neschimbat: aceleași baze, aceeași revocare,
+aceleași reguli `denied` / `censored` / `invalid` și aceleași fișiere `runs.csv` și `samples.csv`.
+
+```powershell
+.\.venv\Scripts\python.exe experiment/batch.py --strategy jwt --ttl 60 --runs 100 --interval 0.02 --output experiment/data/jwt
+.\.venv\Scripts\python.exe experiment/batch.py --strategy introspection --ttl 60 --runs 100 --interval 0.02 --output experiment/data/introspection
+```
+
+- **Faza tokenului.** Cu `--phase random` (implicit), fracțiunile se trag câte una din fiecare
+  dintre cele `--runs` intervale egale și se amestecă, astfel încât și o serie mică acoperă
+  toată durata de viață. Așteptarea este fracțiunea înmulțită cu durata rămasă minus `--guard`
+  (5 s implicit). `--seed` face programul reproductibil. Vârsta tokenului la revocare se
+  poate reconstrui din `remaining_at_revoke_s` din `runs.csv`. `--phase none` revocă imediat.
+- **Credențiale.** Parola demonstrativă se citește din `DEMO_USER_PASSWORD` din mediu sau din
+  `.env` local, numai în memorie, și nu se acceptă ca argument. Se trimite numai către un
+  Keycloak de pe loopback și numai către formularul realm-ului configurat. `--keycloak-url`
+  trebuie să fie `http://localhost:8080`, ca issuer-ul din token. Utilizatorul implicit este
+  `alice.it` (`--username`). Scriptul nu folosește password grant.
+- **Durată.** Fiecare repetare JWT durează aproximativ cât TTL-ul (așteptarea plus timpul
+  până la refuz), deci 100 de repetări la TTL 60 s înseamnă aproximativ 100 de minute cu un
+  singur lucrător. Pentru introspecție, refuzul vine imediat, deci durata este în principal
+  așteptarea aleatoare.
+- **Paralelism.** `--workers N` (cel mult 16) rulează repetări în paralel și scurtează seria,
+  dar adaugă încărcare pe API și Keycloak. Folosește aceeași valoare pentru ambele strategii
+  și nu amesteca seriile cu valori diferite. Pentru costul pe cerere rămâne scenariul separat
+  de încărcare, nu această serie.
+- **Oprire.** O eroare de pregătire (login respins, secret lipsă, TTL mai scurt decât `--guard`)
+  oprește seria cu codul 2, fără rezultate inventate. Repetările deja terminate rămân în CSV.
+  `invalid` produce tot codul 2, ca la `measure.py`.
+
+## Cost sub încărcare (`loadtest.py` și k6)
+
+Seria din `batch.py` măsoară **cât timp** acceptă API-ul un token revocat. Costul validării se
+măsoară separat: `loadtest.py` rulează scenariul k6 `load/k6-api.js` la rate constante de cereri și
+citește în paralel `docker stats` pentru containerele `api` și `keycloak`. Ideea: JWT local nu
+încarcă Keycloak, introspecția adaugă un apel la Keycloak pentru fiecare cerere.
+
+Cerințe: [k6](https://grafana.com/docs/k6/latest/set-up/install-k6/) instalat pe host (`k6 version`),
+Docker pornit, stack-ul local pornit cu strategia măsurată și parola demonstrativă în `.env`.
+
+```powershell
+.\.venv\Scripts\python.exe experiment/loadtest.py --strategy jwt --rates 50,100,200,400,800 --duration 30 --output experiment/data/load
+# repornește API-ul cu TOKEN_VALIDATION_STRATEGY=introspection, apoi:
+.\.venv\Scripts\python.exe experiment/loadtest.py --strategy introspection --rates 50,100,200,400,800 --duration 30 --output experiment/data/load
+```
+
+- **Ce face pentru fiecare rată.** 15 s de măsurare în repaus (CPU de bază), apoi autentificare nouă
+  (cod + PKCE, fără browser), verificare prin `GET /api/me` că API-ul rulează strategia cerută și
+  `--duration` secunde de sarcină cu tokenul transmis prin variabilă de mediu, nu prin argument.
+  Tokenul se cere **după** repaus, ca să fie proaspăt când pornește k6: citirea `docker stats` pe un
+  sistem tocmai saturat poate dura secunde, iar un token cerut mai devreme (60 s de viață) ar putea
+  expira în ultimele secunde ale sarcinii și ar produce 401 fără legătură cu strategia. Durata plus
+  `--guard` trebuie să încapă în durata de viață a tokenului, altfel scriptul se oprește înainte de
+  sarcină. Dacă un scenariu steady primește totuși 401/403, scriptul afișează un avertisment.
+- **Repetări și ordine.** `--repeats N` repetă toată lista de rate, iar `--shuffle` amestecă ordinea
+  în fiecare repetare (reproductibil cu `--seed`). Fiecare rată primește un rând pe repetare în `load.csv`;
+  schema fișierului nu se schimbă. Așa efectele de ordine și de încălzire (de exemplu un prim rând mai
+  lent după repornirea API-ului) apar ca variație între repetări, nu ca rezultat fals. Dacă ai rulat
+  mai devreme sub saturare, repornește și Keycloak (`docker compose restart keycloak`, apoi așteaptă
+  un minut) înainte de o serie nouă: după rulări saturate memoria lui rămâne ridicată și poate falsifica
+  seria următoare.
+- **Încălzire.** Înainte de serie rulează `--warmup-seconds` (20 implicit, 0 o oprește) de sarcină la
+  rata mediană (`--warmup-rate`), care nu se înregistrează. Fără ea, prima rată include compilarea JIT
+  și inițializarea pool-urilor, iar costul pe cerere la rate mici iese umflat. Folosește aceeași
+  încălzire la ambele strategii.
+- **Rată fixă.** Executorul `constant-arrival-rate` păstrează rata indiferent de latență. Dacă API-ul
+  nu ține pasul, apar `dropped_iterations` și latențe mari în loc ca testul să încetinească tăcut.
+- **Rezultat.** O linie în `load.csv` per rată: cereri/s obținute, p50/p95/p99, statusuri, CPU mediu
+  în repaus și sub sarcină, **CPU ms per cerere** (`(CPU_sarcină − CPU_repaus)/100 · 1000 / cereri_pe_s`,
+  în milisecunde de un nucleu, deoarece `docker stats` raportează 100% per nucleu) și memoria maximă.
+- **Endpoint.** Implicit `/api/me`, care izolează validarea tokenului. Cu `--endpoint /api/documents`
+  se adaugă politica de acces și baza de date.
+- **Keycloak oprit.** `--keycloak-down` repetă cea mai mică rată după serie, cu `docker compose stop
+  keycloak`, și îl repornește mereu la final, chiar dacă k6 eșuează, apoi așteaptă să răspundă.
+  Se vede ce strategie mai acceptă tokenuri când furnizorul de identitate nu răspunde. Rezultatul
+  depinde de cache-ul JWKS al API-ului, deci îl raportezi așa cum iese, nu cum te aștepți.
+  Atenție: oprește Keycloak pentru aproximativ un minut, inclusiv pentru celelalte aplicații.
+- **401 sub saturare cu introspecție (observat).** La 800 de cereri/s cu `introspection` k6 a numărat mii de 401, deși tokenurile erau valide. Jurnalul API-ului conține, pentru fiecare, `AuthenticationServiceException: I/O error on POST request for ".../token/introspect": too many concurrent streams`; numărul de excepții (5554) a coincis exact cu numărul de 401 din cele două rulări. Clientul HTTP al API-ului către Keycloak cedează la concurență mare, excepția iese din filtrul de securitate, iar redirectul intern către `/error` (care cere autentificare) o transformă în 401, nu în 5xx. Consecințe: (1) rândurile de la ratele care produc astfel de erori nu măsoară doar costul Keycloak, ci și limita acestui client și se raportează ca atare; (2) un 401 nu înseamnă automat refuz de autorizare cu introspecție, de aceea măsurătoarea de revocare cere cinci refuzuri consecutive și rulează fără concurență. Verificare: `docker compose logs --since 30m api | grep -c "AuthenticationServiceException: I/O error"`.
+- **Raport.** `python experiment/load_report.py experiment/data/load/load.csv --output experiment/data/load/summary.json --plot experiment/data/load/load.png`
+  grupează rândurile `steady` pe strategie și rată (mediană și min–max pe repetări), afișează un tabel
+  și costul marginal de CPU pe cerere suplimentară (panta regresiei CPU% față de cereri/s, în
+  `--slope-range`, implicit 50–400, sub saturare; 10 · pantă = ms de un nucleu pe cerere). Rândurile
+  `keycloak_down` se listează separat. Cu 3 repetări nu se calculează intervale de încredere.
+- **Limite.** `docker stats` citește la 1–2 s, deci valorile sunt medii grosiere. Un client k6 pe aceeași
+  mașină consumă CPU și el. Notează procesorul, memoria alocată Docker și ce altceva rulează, și repetă
+  seria de mai multe ori înainte să tragi concluzii. Fără `docker` disponibil, coloanele de CPU rămân
+  goale (nu sunt inventate), iar cele k6 se completează.
 
 ## Metoda și fișierele rezultate
 
@@ -94,11 +188,21 @@ HTTP fără TLS este acceptat numai pentru loopback; folosește HTTPS pe alt hos
 ## Analiză
 
 ```powershell
-.\.venv\Scripts\python.exe experiment/analyze.py experiment/data/jwt experiment/data/introspection --output experiment/data/summary.json --plot experiment/data/comparison.png
+.\.venv\Scripts\python.exe experiment/analyze.py experiment/data/jwt experiment/data/introspection --output experiment/data/summary.json --plot experiment/data/comparison.png --ecdf-plot experiment/data/ecdf.png
 ```
 
+`--ecdf-plot` scrie două grafice: ECDF-ul timpului până la refuz pentru fiecare strategie și TTL, și
+timpul până la refuz în funcție de durata rămasă a tokenului la revocare (cu dreapta "refuz exact
+la expirare"). Al doilea grafic arată dependența de faza tokenului pentru JWT local și absența ei
+pentru introspecție.
+
 Raportul grupează după strategie și TTL, include totalul repetărilor valide,
-cenzurate și invalide și raportează p50, p95, minim, maxim și media. Cu cel puțin
+cenzurate și invalide și raportează p50, p95, p99, minim, maxim și media. p99 este informativ
+numai cu aproximativ 100 de repetări confirmate sau mai multe; citește-l împreună cu `n`.
+Pentru fiecare grup raportul include și funcția de repartiție empirică (ECDF) a timpului până la
+refuz, perechile (durata rămasă la revocare, timp până la refuz) și diferența dintre ele
+(`denial_minus_remaining_s`): aproape de 0 înseamnă refuz doar la expirarea tokenului, clar
+negativ înseamnă refuz mai devreme. Cu cel puțin
 două repetări se calculează intervalul bootstrap de încredere 95% pentru mediana
 ferestrei de revocare. Latența de bază este raportată atât pentru toate cererile
 200 cumulate, cât și pentru medianele per repetare; bootstrapul latenței resamplează
@@ -113,7 +217,7 @@ setul de documente, resursele Docker și intervalul trebuie menținute comparabi
 Implicit cererile sunt secvențiale, fără concurență. `--interval` reprezintă pauza
 după fiecare răspuns, deci rezoluția observată include intervalul și latența HTTP.
 Măsurarea nu separă CPU de rețea, baza de date sau validarea tokenului; pentru
-throughput sub încărcare folosiți separat un scenariu k6/wrk2 și `docker stats`,
+throughput sub încărcare folosește `loadtest.py` (k6 și `docker stats`, secțiunea de mai sus),
 înregistrând configurația hardware. Aceste scripturi nu pretind un benchmark
 concurent sau consum de resurse pe care nu le măsoară.
 

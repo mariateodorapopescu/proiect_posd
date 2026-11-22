@@ -8,6 +8,6 @@ WORKDIR /experiment
 COPY requirements-lock.txt ./
 RUN python -m pip install --no-cache-dir -r requirements-lock.txt \
     && useradd --create-home --uid 10001 experiment
-COPY measure.py analyze.py test_experiment.py ./
+COPY measure.py batch.py loadtest.py load_report.py analyze.py test_experiment.py test_batch.py test_analysis_extended.py test_loadtest.py test_load_report.py ./
 USER experiment
 CMD ["python", "-m", "unittest", "discover", "-s", ".", "-p", "test_*.py", "-v"]
