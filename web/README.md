@@ -83,6 +83,50 @@ actualizate. Documentele existente nu își schimbă automat departamentul.
 O eroare de serviciu cere reîncărcarea listei pentru verificarea stării reale;
 interfața nu pretinde că operațiile Keycloak sunt o tranzacție atomică.
 
+## Monitor de revocare în Portal
+
+Tabul **Contul meu** din Portal include secțiunea **Cât mai este acceptat tokenul tău?**.
+Monitorul trimite la fiecare secundă `GET /api/me` cu tokenul curent, ținut doar în memorie, și
+afișează valabilitatea rămasă, numărul de cereri și o cronologie a răspunsurilor (✓ acceptat,
+✕ refuzat, ! fără răspuns sau eroare). Nu folosește `request()`: acolo un 401 închide sesiunea
+locală, iar monitorul trebuie să continue cu același token.
+
+Un refuz se confirmă după trei răspunsuri consecutive 401 sau 403; un 200 resetează seria, iar
+erorile de rețea sau 5xx nu confirmă și nu anulează refuzul. Rezultatul distinge:
+
+- **refuzat înainte de expirare**: tokenul era încă valabil, deci sesiunea a fost revocată sau
+  drepturile au fost retrase;
+- **refuzat după expirare**;
+- **acceptat până la expirare**: monitorul se oprește cu 1,5 s înainte, pentru că aplicația
+  se deconectează la expirare. Cu validarea locală JWT, aceasta este comportamentul așteptat.
+
+Interfața nu află când a fost revocată sesiunea; vede doar răspunsurile API-ului. Demonstrație:
+pornește monitorul, apoi în alt tab apasă „Deconectare SSO” în Documente sau închide sesiunea
+din consola Keycloak. Cu `TOKEN_VALIDATION_STRATEGY=introspection` refuzul apare în aproximativ o
+secundă; cu `jwt`, tokenul rămâne acceptat până expiră. Monitorul este o demonstrație, nu o
+măsurătoare: rezoluția este de o secundă, iar măsurătorile reale sunt în `experiment/`.
+Logica este în `shared/monitor-policy.mjs`, acoperită de `tests/monitor.test.mjs`; interfața
+nu a fost verificată automat într-un browser.
+
+## Aspect, teme și structura codului
+
+Stilurile sunt într-un singur fișier, `shared/style.css`, organizat pe secțiuni (tokeni,
+bază, butoane, formulare, layout, componente, Portal, responsive, mișcare redusă).
+Culorile sunt variabile CSS definite o singură dată cu `light-dark()`: interfața urmează
+tema sistemului, iar butonul din antet ciclează între „Sistem”, „Luminoasă” și
+„Întunecată”. Preferința nu se salvează (fără `localStorage`, conform regulilor de
+securitate din `.agents/security.md`); după reîncărcare se revine la „Sistem”.
+Logica ciclului este în `shared/theme-policy.mjs`, acoperită de `tests/theme.test.mjs`.
+
+Accesibilitate: link „Sari la conținut”, inel de focus cu contrast peste 4,5:1 pe ambele
+teme, perechile de culori text/fundal verificate la cel puțin 4,5:1 și respectarea
+`prefers-reduced-motion`. Contrastul s-a calculat o dată cu un script, nu cu un audit
+automat în browser (Lighthouse/axe), deci un astfel de audit rămâne de făcut.
+
+Componentele sunt separate pe fișiere: `main.tsx` (aplicația și antetul), `Documents.tsx`,
+`Portal.tsx`, `Members.tsx`, `RevocationMonitor.tsx`, `ThemeToggle.tsx`, plus `ui.ts` pentru
+helperele comune.
+
 ## Validare
 
 ```powershell
