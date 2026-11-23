@@ -1,0 +1,53 @@
+/* Aceeași hârtie, aceeași cerneală și același marker ca aplicațiile (web/shared/style.css). */
+:root, .pf-v5-theme-dark {
+  --ss-bg: #f5efe4; --ss-surface: #fbf8f1; --ss-ink: #2b2520; --ss-muted: #62574d;
+  --ss-accent: #9c3f22; --ss-accent-hover: #7a2f17; --ss-mark: #f2c14e; --ss-border: #ddd1ba;
+  --pf-v5-global--primary-color--100: var(--ss-accent);
+  --pf-v5-global--primary-color--200: var(--ss-accent-hover);
+  --pf-v5-global--link--Color: var(--ss-accent);
+  --pf-v5-global--link--Color--hover: var(--ss-accent-hover);
+}
+@media (prefers-color-scheme: dark) {
+  :root, .pf-v5-theme-dark {
+    --ss-bg: #1b1713; --ss-surface: #24201a; --ss-ink: #f0e7d8; --ss-muted: #bcae99;
+    --ss-accent: #e39069; --ss-accent-hover: #f0a987; --ss-mark: #6b5412; --ss-border: #3b342b;
+  }
+}
+html, body, .pf-v5-c-login {
+  background-color: var(--ss-bg) !important;
+  background-image: radial-gradient(var(--ss-border) 1.2px, transparent 1.2px) !important;
+  background-size: 24px 24px !important;
+  color: var(--ss-ink);
+  font-family: "Avenir Next", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+.pf-v5-c-login__container { background: none !important; }
+.pf-v5-c-login__main {
+  background: var(--ss-surface) !important; color: var(--ss-ink);
+  border: 2px solid var(--ss-ink); border-radius: 3px !important;
+  box-shadow: 8px 8px 0 var(--ss-accent) !important;
+}
+#kc-header-wrapper, .pf-v5-c-login__header, .kc-login-logo {
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  font-size: 30px; font-weight: 600; color: var(--ss-ink); text-transform: none; letter-spacing: -.3px;
+}
+#kc-page-title, .pf-v5-c-login__main-header h1 {
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  font-weight: 600; color: var(--ss-ink);
+  background: linear-gradient(transparent 60%, var(--ss-mark) 60% 92%, transparent 92%);
+  display: inline; padding: 0 .12em;
+}
+label, .pf-v5-c-form__label-text { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 13px; font-weight: 700; color: var(--ss-ink); }
+.pf-v5-c-form-control, .pf-v5-c-form-control input {
+  border: 2px solid var(--ss-ink) !important; border-radius: 3px !important;
+  background: var(--ss-surface); color: var(--ss-ink);
+}
+.pf-v5-c-form-control::before, .pf-v5-c-form-control::after { display: none !important; }
+.pf-v5-c-button.pf-m-primary {
+  background: var(--ss-accent); color: #fffaf2; border: 2px solid var(--ss-ink); border-radius: 3px;
+  box-shadow: 3px 3px 0 var(--ss-ink); font-weight: 600;
+}
+.pf-v5-c-button.pf-m-primary:hover { background: var(--ss-accent-hover); transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--ss-ink); }
+.pf-v5-c-button.pf-m-primary:active { transform: translate(3px, 3px); box-shadow: none; }
+a { color: var(--ss-accent); text-underline-offset: 3px; }
+.pf-v5-c-alert { border: 2px solid var(--ss-ink); border-radius: 3px; }
+:focus-visible { outline: 3px solid #2457b8; outline-offset: 2px; }

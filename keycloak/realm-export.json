@@ -1,6 +1,7 @@
 {
   "realm": "securesync",
   "displayName": "SecureSync",
+  "loginTheme": "securesync",
   "enabled": true,
   "sslRequired": "none",
   "registrationAllowed": false,

@@ -50,6 +50,7 @@ services:
       - '127.0.0.1:8080:8080'
     volumes:
       - ./keycloak/realm-export.json:/opt/keycloak/data/import/securesync-realm.json:ro
+      - ./keycloak/themes/securesync:/opt/keycloak/themes/securesync:ro
     depends_on:
       keycloak-db:
         condition: service_healthy
