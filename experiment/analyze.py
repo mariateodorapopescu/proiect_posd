@@ -173,8 +173,9 @@ def save_plot(summary, path: Path):
                           f"denied {group['runs_denied']}, censored {group['runs_censored']}, "
                           f"invalid {group['runs_invalid']}")
             if stats["p50"] is not None:
-                axis.scatter(index, stats["p50"], marker="o", label="p50" if index == 0 else None)
-                axis.scatter(index, stats["p95"], marker="x", label="p95" if index == 0 else None)
+                # One colour per statistic across every group, so the legend matches all points.
+                axis.scatter(index, stats["p50"], marker="o", color="tab:blue", label="p50" if index == 0 else None)
+                axis.scatter(index, stats["p95"], marker="x", color="tab:orange", label="p95" if index == 0 else None)
         axis.set_xticks(range(len(groups)), labels, fontsize=8)
         axis.set_ylim(bottom=0)
         axis.grid(axis="y", alpha=0.25)
