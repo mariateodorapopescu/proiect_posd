@@ -82,9 +82,8 @@ export function RevocationMonitor({ identity }: { identity: Identity | null }) {
   const running = monitor?.phase === 'running';
   const summary = monitor ? describe(monitor) : null;
   return <section className="section monitor" aria-labelledby="monitor-title">
-    <p className="eyebrow">Demonstrație live</p>
-    <h2 id="monitor-title">Cât mai este acceptat tokenul tău?</h2>
-    <p className="muted">Portalul trimite la fiecare secundă o cerere către API cu tokenul curent, păstrat doar în memorie, și arată când API-ul începe să îl refuze. Interfața nu află când a fost revocată sesiunea: vede doar răspunsurile API-ului.</p>
+    <h2 id="monitor-title">Cât mai ține tokenul tău?</h2>
+    <p className="muted">La fiecare secundă trimit API-ului o cerere cu tokenul tău și notez ce răspunde. Pagina nu află când se revocă sesiunea; vede doar când API-ul începe să refuze.</p>
     <dl className="monitor-stats">
       <div><dt>Strategie de validare</dt><dd>{identity?.strategy ?? '—'}</dd></div>
       <div><dt>Valabilitate rămasă</dt><dd>{remaining === null ? '—' : `${remaining} s`}</dd></div>

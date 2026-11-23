@@ -106,14 +106,14 @@ export function Members({ identity }: { identity: Identity }) {
   }
 
   return <section className="section members-section" aria-labelledby="members-title" aria-busy={loading}>
-    <div className="section-heading"><div><p className="eyebrow">Rol IMPLEMENTATOR</p><h2 id="members-title">Administrare membri</h2></div><button className="secondary" disabled={loading || Boolean(busyId)} onClick={() => navigate({ search, page })}>Actualizează lista</button></div>
-    <p className="muted">Atribuie roluri și departamente conturilor existente. USER permite accesul ca membru, ADMIN administrează documentele, iar IMPLEMENTATOR administrează drepturile membrilor.</p>
+    <div className="section-heading"><h2 id="members-title">Administrare membri</h2><button className="secondary" disabled={loading || Boolean(busyId)} onClick={() => navigate({ search, page })}>Actualizează lista</button></div>
+    <p className="muted">Aici le dai conturilor roluri și departamente. USER înseamnă acces de membru, ADMIN poate gestiona toate documentele, IMPLEMENTATOR poate schimba drepturile celorlalți.</p>
     <p className="small muted">Drepturile sunt verificate și de API. Modificările se aplică în tokenul obținut la următoarea autentificare a membrului; documentele deja încărcate își păstrează proprietarul și departamentul.</p>
     <form className="members-search" onSubmit={searchMembers}><label>Caută după utilizator<input type="search" name="member-search" maxLength={80} value={searchText} onChange={event => setSearchText(event.target.value)} disabled={Boolean(busyId)} placeholder="Ex. alice.it" /></label><button type="submit" disabled={loading || Boolean(busyId)}>Caută</button></form>
     {pendingNavigation && <div className="notice info" role="group" aria-label="Modificări nesalvate"><p>Ai modificări nesalvate. Continui și renunți la ele?</p><div className="button-row"><button onClick={() => navigate(pendingNavigation, true)}>Renunță la modificări și continuă</button><button className="secondary" onClick={() => setPendingNavigation(null)}>Rămâi pe pagină</button></div></div>}
     {error && <div className="notice error" role="alert"><p>{error}</p>{denied && <button className="secondary" onClick={() => void auth.login()}>Actualizează autentificarea</button>}</div>}
     <div aria-live="polite">{notice && <p className="notice success">{notice}</p>}</div>
-    {loading ? <p role="status">Se încarcă membrii…</p> : !loaded ? <p className="muted">Lista nu a putut fi încărcată. Folosește „Actualizează lista” pentru a reîncerca.</p> : members.length === 0 && !denied ? <p className="muted">Nu există membri pentru această căutare.</p> : <ul className="members-list">{members.map(member => {
+    {loading ? <p role="status">Caut membrii…</p> : !loaded ? <p className="muted">Lista nu a putut fi încărcată. Folosește „Actualizează lista” pentru a reîncerca.</p> : members.length === 0 && !denied ? <p className="muted">Nu am găsit niciun membru cu căutarea asta.</p> : <ul className="members-list">{members.map(member => {
       const access = drafts[member.id] || accessOf(member);
       const self = member.id === identity.sub;
       const disabled = loading || Boolean(busyId) || self || denied;

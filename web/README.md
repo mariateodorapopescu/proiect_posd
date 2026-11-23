@@ -118,13 +118,20 @@ tema sistemului, iar butonul din antet ciclează între „Sistem”, „Luminoa
 securitate din `.agents/security.md`); după reîncărcare se revine la „Sistem”.
 Logica ciclului este în `shared/theme-policy.mjs`, acoperită de `tests/theme.test.mjs`.
 
+Direcția vizuală este „cald și meșteșugit”: fundal crem, text brun-închis, un singur accent
+teracotă, titluri cu serif din sistem (fără fonturi descărcate), colțuri puțin rotunjite,
+secțiuni separate prin linii, fără umbre. Sigla (o cheie desenată cu linie) este în
+`shared/KeyMark.tsx`. Textele din interfață sunt scrise direct, fără etichete decorative
+deasupra titlurilor. Contrastul perechilor de culori, în ambele teme, este verificat
+automat de `tests/contrast.test.mjs` (prag 4,5:1).
+
 Accesibilitate: link „Sari la conținut”, inel de focus cu contrast peste 4,5:1 pe ambele
 teme, perechile de culori text/fundal verificate la cel puțin 4,5:1 și respectarea
 `prefers-reduced-motion`. Contrastul s-a calculat o dată cu un script, nu cu un audit
 automat în browser (Lighthouse/axe), deci un astfel de audit rămâne de făcut.
 
 Componentele sunt separate pe fișiere: `main.tsx` (aplicația și antetul), `Documents.tsx`,
-`Portal.tsx`, `Members.tsx`, `RevocationMonitor.tsx`, `ThemeToggle.tsx`, plus `ui.ts` pentru
+`Portal.tsx`, `Members.tsx`, `RevocationMonitor.tsx`, `ThemeToggle.tsx`, `KeyMark.tsx`, plus `ui.ts` pentru
 helperele comune.
 
 ## Validare
