@@ -1,53 +1,79 @@
-/* Aceeași hârtie, aceeași cerneală și același marker ca aplicațiile (web/shared/style.css). */
-:root, .pf-v5-theme-dark {
-  --ss-bg: #f5efe4; --ss-surface: #fbf8f1; --ss-ink: #2b2520; --ss-muted: #62574d;
-  --ss-accent: #9c3f22; --ss-accent-hover: #7a2f17; --ss-mark: #f2c14e; --ss-border: #ddd1ba;
+/* Aceeași direcție ca aplicațiile (web/shared/style.css): sticlă, lumini difuze, cobalt.
+   Selectorii sunt ai temei keycloak.v2 (PatternFly v5); !important doar unde tema de bază îl folosește. */
+:root {
+  --ss-bg: #f4f1f8; --ss-surface: #ffffff; --ss-ink: #151832; --ss-muted: #4f5473;
+  --ss-accent: #2433c9; --ss-accent-hover: #1a26a3; --ss-on-accent: #ffffff;
+  --ss-border: #9ba0c0; --ss-edge: #7d82a6; --ss-signal: #ffd84d; --ss-focus: #b3261e;
+  --ss-orb-a: #97a6ff; --ss-orb-b: #ffc4a3; --ss-orb-c: #a9e3ff;
   --pf-v5-global--primary-color--100: var(--ss-accent);
   --pf-v5-global--primary-color--200: var(--ss-accent-hover);
   --pf-v5-global--link--Color: var(--ss-accent);
   --pf-v5-global--link--Color--hover: var(--ss-accent-hover);
 }
 @media (prefers-color-scheme: dark) {
-  :root, .pf-v5-theme-dark {
-    --ss-bg: #1b1713; --ss-surface: #24201a; --ss-ink: #f0e7d8; --ss-muted: #bcae99;
-    --ss-accent: #e39069; --ss-accent-hover: #f0a987; --ss-mark: #6b5412; --ss-border: #3b342b;
+  :root:not([data-ss-theme="light"]) {
+    --ss-bg: #0b0e1f; --ss-surface: #171b30; --ss-ink: #eceefc; --ss-muted: #a9afd0;
+    --ss-accent: #9aa6ff; --ss-accent-hover: #bcc4ff; --ss-on-accent: #0e1120;
+    --ss-border: #4d5580; --ss-edge: #6a7399; --ss-focus: #ffd84d;
+    --ss-orb-a: #2a38d4; --ss-orb-b: #6a2fc4; --ss-orb-c: #0c7a9e;
   }
 }
+:root[data-ss-theme="dark"], :root.pf-v5-theme-dark:not([data-ss-theme="light"]) {
+  --ss-bg: #0b0e1f; --ss-surface: #171b30; --ss-ink: #eceefc; --ss-muted: #a9afd0;
+  --ss-accent: #9aa6ff; --ss-accent-hover: #bcc4ff; --ss-on-accent: #0e1120;
+  --ss-border: #4d5580; --ss-edge: #6a7399; --ss-focus: #ffd84d;
+  --ss-orb-a: #2a38d4; --ss-orb-b: #6a2fc4; --ss-orb-c: #0c7a9e;
+}
+
 html, body, .pf-v5-c-login {
-  background-color: var(--ss-bg) !important;
-  background-image: radial-gradient(var(--ss-border) 1.2px, transparent 1.2px) !important;
-  background-size: 24px 24px !important;
-  color: var(--ss-ink);
-  font-family: "Avenir Next", "Segoe UI", system-ui, -apple-system, sans-serif;
+  background: var(--ss-bg) !important; color: var(--ss-ink);
+  font-family: "Avenir Next", "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif;
 }
+.pf-v5-c-login { background: transparent !important; }
 .pf-v5-c-login__container { background: none !important; }
+
+/* Lumini difuze în spatele panoului, ca în aplicații */
+html::before, html::after { content: ""; position: fixed; z-index: -1; border-radius: 50%; filter: blur(90px); opacity: .6; pointer-events: none; will-change: transform; }
+html::before { width: 52vw; height: 52vw; left: -12vw; top: -16vw; background: var(--ss-orb-a); animation: ss-drift-a 28s ease-in-out infinite; }
+html::after { width: 44vw; height: 44vw; right: -10vw; bottom: -14vw; background: var(--ss-orb-b); animation: ss-drift-b 34s ease-in-out infinite; }
+@keyframes ss-drift-a { 50% { transform: translate3d(9vw, 7vh, 0) scale(1.14); } }
+@keyframes ss-drift-b { 50% { transform: translate3d(-8vw, -9vh, 0) scale(.9); } }
+
+/* Panoul de autentificare: sticlă cu margine vizibilă */
 .pf-v5-c-login__main {
-  background: var(--ss-surface) !important; color: var(--ss-ink);
-  border: 2px solid var(--ss-ink); border-radius: 3px !important;
-  box-shadow: 8px 8px 0 var(--ss-accent) !important;
+  background: color-mix(in oklab, var(--ss-surface) 66%, transparent) !important; color: var(--ss-ink);
+  border: 1px solid var(--ss-edge); border-radius: 26px !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5), 0 34px 70px -34px rgba(21, 24, 50, .55) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.3); backdrop-filter: blur(18px) saturate(1.3);
+  animation: ss-rise .8s cubic-bezier(.2, .7, .2, 1) both;
 }
+@supports not (backdrop-filter: blur(1px)) { .pf-v5-c-login__main { background: var(--ss-surface) !important; } }
+@keyframes ss-rise { from { opacity: 0; transform: translateY(18px); } }
+
 #kc-header-wrapper, .pf-v5-c-login__header, .kc-login-logo {
-  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
-  font-size: 30px; font-weight: 600; color: var(--ss-ink); text-transform: none; letter-spacing: -.3px;
+  font-size: 28px; font-weight: 800; color: var(--ss-ink); text-transform: none; letter-spacing: -.6px;
 }
 #kc-page-title, .pf-v5-c-login__main-header h1 {
-  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
-  font-weight: 600; color: var(--ss-ink);
-  background: linear-gradient(transparent 60%, var(--ss-mark) 60% 92%, transparent 92%);
-  display: inline; padding: 0 .12em;
+  font-weight: 800; letter-spacing: -.8px; color: var(--ss-ink); background: none; display: block;
 }
-label, .pf-v5-c-form__label-text { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 13px; font-weight: 700; color: var(--ss-ink); }
+label, .pf-v5-c-form__label-text { font-size: 14px; font-weight: 650; color: var(--ss-ink); }
 .pf-v5-c-form-control, .pf-v5-c-form-control input {
-  border: 2px solid var(--ss-ink) !important; border-radius: 3px !important;
-  background: var(--ss-surface); color: var(--ss-ink);
+  border: 1px solid var(--ss-border) !important; border-radius: 12px !important;
+  background: color-mix(in oklab, var(--ss-surface) 82%, transparent); color: var(--ss-ink);
 }
 .pf-v5-c-form-control::before, .pf-v5-c-form-control::after { display: none !important; }
 .pf-v5-c-button.pf-m-primary {
-  background: var(--ss-accent); color: #fffaf2; border: 2px solid var(--ss-ink); border-radius: 3px;
-  box-shadow: 3px 3px 0 var(--ss-ink); font-weight: 600;
+  background: linear-gradient(180deg, color-mix(in oklab, var(--ss-accent) 86%, #fff), var(--ss-accent));
+  color: var(--ss-on-accent); border: 1px solid var(--ss-accent); border-radius: 12px; font-weight: 650;
+  transition: transform .2s cubic-bezier(.2, .7, .2, 1), box-shadow .2s, background-color .2s;
 }
-.pf-v5-c-button.pf-m-primary:hover { background: var(--ss-accent-hover); transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--ss-ink); }
-.pf-v5-c-button.pf-m-primary:active { transform: translate(3px, 3px); box-shadow: none; }
+.pf-v5-c-button.pf-m-primary:hover { background: var(--ss-accent-hover); border-color: var(--ss-accent-hover); transform: translateY(-1px); box-shadow: 0 10px 22px -12px var(--ss-accent); }
+.pf-v5-c-button.pf-m-primary:active { transform: none; box-shadow: none; }
 a { color: var(--ss-accent); text-underline-offset: 3px; }
-.pf-v5-c-alert { border: 2px solid var(--ss-ink); border-radius: 3px; }
-:focus-visible { outline: 3px solid #2457b8; outline-offset: 2px; }
+.pf-v5-c-alert { border-radius: 12px; }
+:focus-visible { outline: 3px solid var(--ss-focus); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  html::before, html::after, .pf-v5-c-login__main { animation: none !important; }
+  .pf-v5-c-button.pf-m-primary { transition: none; }
+}
