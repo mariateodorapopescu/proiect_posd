@@ -31,3 +31,13 @@ for (const theme of ['light', 'dark']) {
     }
   });
 }
+
+// Marginea sticlei trebuie să se vadă (3:1, prag pentru elemente grafice) pe fundal și pe suprafață.
+for (const theme of ['light', 'dark']) {
+  test(`glass edge ${theme}`, () => {
+    for (const background of ['bg', 'surface']) {
+      const value = ratio(pick('glass-edge', theme), pick(background, theme));
+      assert.ok(value >= 3, `glass-edge on ${background} (${theme}): ${value.toFixed(2)}:1`);
+    }
+  });
+}

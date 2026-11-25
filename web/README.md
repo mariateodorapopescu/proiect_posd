@@ -114,16 +114,22 @@ Stilurile sunt într-un singur fișier, `shared/style.css`, organizat pe secțiu
 bază, butoane, formulare, layout, componente, Portal, responsive, mișcare redusă).
 Culorile sunt variabile CSS definite o singură dată cu `light-dark()`: interfața urmează
 tema sistemului, iar butonul din antet ciclează între „Sistem”, „Luminoasă” și
-„Întunecată”. Preferința nu se salvează (fără `localStorage`, conform regulilor de
-securitate din `.agents/security.md`); după reîncărcare se revine la „Sistem”.
+„Întunecată”. Alegerea se păstrează în cookie-ul `securesync-theme` (un an, `SameSite=Lax`,
+`Secure` pe HTTPS), nu în `localStorage`: cookie-urile nu țin cont de port, așa că Documente
+(3001) și Portal (3002) folosesc aceeași temă. Cookie-ul conține doar „light” sau „dark”;
+„Sistem” îl șterge. Tokenurile rămân numai în memorie, conform `.agents/security.md`.
+Pe subdomenii diferite ar fi nevoie de atributul `Domain`.
 Logica ciclului este în `shared/theme-policy.mjs`, acoperită de `tests/theme.test.mjs`.
 
-Direcția vizuală este „cald și meșteșugit”: fundal crem, text brun-închis, un singur accent
-teracotă, titluri cu serif din sistem (fără fonturi descărcate), colțuri puțin rotunjite,
-secțiuni separate prin linii, fără umbre. Sigla (o cheie desenată cu linie) este în
-`shared/KeyMark.tsx`. Textele din interfață sunt scrise direct, fără etichete decorative
-deasupra titlurilor. Contrastul perechilor de culori, în ambele teme, este verificat
-automat de `tests/contrast.test.mjs` (prag 4,5:1).
+Direcția vizuală este „aerisit și plutitor”: bară laterală de sticlă cobalt, secțiuni-panouri
+de sticlă pe lumini difuze animate, un singur font de sistem cu titluri groase (fără fonturi
+descărcate). Pagina de intrare are o scenă 3D făcută numai din CSS (`shared/Scene.tsx`:
+o cheie extrudată, un inel în orbită și trei documente de sticlă, înclinate ușor după cursor).
+Sticla are mereu margine vizibilă (3:1, verificat în teste) și fundal opac unde
+`backdrop-filter` nu e suportat; mișcarea se oprește la `prefers-reduced-motion`. Sigla este
+în `shared/KeyMark.tsx`. Variantele anterioare sunt în istoricul git și în `web/design-alt/`.
+Contrastul perechilor de culori, în ambele teme, este verificat automat de
+`tests/contrast.test.mjs` (4,5:1 pentru text, 3:1 pentru marginile de sticlă).
 
 Accesibilitate: link „Sari la conținut”, inel de focus cu contrast peste 4,5:1 pe ambele
 teme, perechile de culori text/fundal verificate la cel puțin 4,5:1 și respectarea

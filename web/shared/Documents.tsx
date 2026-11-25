@@ -61,7 +61,7 @@ export function Documents({ identity }: { identity: Identity | null }) {
   const mayWrite = identity?.scopes.includes('documents:write') && identity.roles.some(role => role === 'USER' || role === 'ADMIN');
   return <>
     <section className="section" aria-labelledby="upload-title">
-      <div className="section-heading"><h2 id="upload-title">Adaugă un document</h2><span className="tag">doar PDF, până la 10 MiB</span></div>
+      <div className="section-heading"><h2 id="upload-title">Adaugă un document</h2><span className="meta">doar PDF, până la 10 MiB</span></div>
       <p className="muted">Îl văd cel care l-a încărcat, colegii din același departament și administratorii.</p>
       <form ref={form} onSubmit={upload} className="upload-form">
         <label>Titlu<input name="title" type="text" required maxLength={TITLE_MAX_LENGTH} placeholder="de ex. Ghid de lucru" disabled={busy || !mayWrite} /></label>
