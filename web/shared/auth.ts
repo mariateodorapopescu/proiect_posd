@@ -7,38 +7,59 @@ import { createOidcSettings, createSigninArgs } from './oidc-settings.mjs';
 // a navigation. Neither access/refresh/ID tokens nor the User enter web storage.
 export const manager = new UserManager(createOidcSettings(config, window.sessionStorage));
 
-type AuthState = { user: User | null; busy: boolean; error: string | null };
-let current: AuthState = { user: null, busy: true, error: null };
+type RedirectAction = 'login' | 'register' | 'logout';
+type AuthState = { user: User | null; pending: 'initializing' | RedirectAction | null; error: string | null };
+let current: AuthState = { user: null, pending: 'initializing', error: null };
 const listeners = new Set<() => void>();
 function publish(value: AuthState) { current = value; listeners.forEach(listener => listener()); }
+
+async function redirect(action: RedirectAction, navigate: () => Promise<void>, failureMessage: string) {
+  if (current.pending) return;
+  const started: AuthState = { user: action === 'logout' ? null : current.user, pending: action, error: null };
+  publish(started);
+  let error: string | null = null;
+  try {
+    await navigate();
+  } catch {
+    error = failureMessage;
+  } finally {
+    // The OIDC navigator resolves on pageshow when Back restores this page.
+    if (current === started) publish({ ...started, pending: null, error });
+  }
+}
+
+function signIn(action: 'login' | 'register') {
+  const registration = action === 'register';
+  return redirect(action, () => manager.signinRedirect({
+    ...createSigninArgs(),
+    prompt: registration ? 'create' : undefined,
+  }), registration ? 'Înregistrarea nu s-a deschis. Verifică disponibilitatea Keycloak.'
+    : 'Autentificarea nu a pornit. Verifică disponibilitatea Keycloak.');
+}
+
 export const auth = {
   getSnapshot: () => current,
   subscribe: (listener: () => void) => { listeners.add(listener); return () => listeners.delete(listener); },
   token: () => current.user?.access_token ?? null,
-  async login() {
-    publish({ ...current, busy: true, error: null });
-    try { await manager.clearStaleState(); await manager.signinRedirect(createSigninArgs()); }
-    catch { publish({ ...current, busy: false, error: 'Autentificarea nu a pornit. Verifică disponibilitatea Keycloak.' }); }
-  },
-  async logout() {
+  login: () => signIn('login'),
+  register: () => signIn('register'),
+  logout() {
     const hint = current.user?.id_token;
-    publish({ user: null, busy: true, error: null });
-    try { await manager.signoutRedirect({ id_token_hint: hint, state: 'logout' }); }
-    catch {
-      await manager.removeUser();
-      publish({ user: null, busy: false, error: 'Sesiunea locală a fost închisă, dar Keycloak nu a confirmat deconectarea.' });
-    }
+    return redirect('logout', async () => {
+      try { await manager.signoutRedirect({ id_token_hint: hint, state: 'logout' }); }
+      catch (error) { await manager.removeUser(); throw error; }
+    }, 'Sesiunea locală a fost închisă, dar Keycloak nu a confirmat deconectarea.');
   },
   async rejectToken(sentToken: string) {
     if (!isCurrentSession(sentToken, auth.token())) return;
     await manager.removeUser();
-    if (isCurrentSession(sentToken, auth.token())) publish({ user: null, busy: false, error: 'API-ul a refuzat tokenul. Autentifică-te din nou.' });
+    if (isCurrentSession(sentToken, auth.token())) publish({ user: null, pending: null, error: 'API-ul a refuzat tokenul. Autentifică-te din nou.' });
   }
 };
 
 manager.events.addAccessTokenExpired(() => {
   void manager.removeUser();
-  publish({ user: null, busy: false, error: 'Tokenul a expirat. Autentifică-te din nou pentru a continua.' });
+  publish({ user: null, pending: null, error: 'Tokenul a expirat. Autentifică-te din nou pentru a continua.' });
 });
 
 let initialization: Promise<void> | null = null;
@@ -49,19 +70,19 @@ export function initializeAuth() {
       if (kind === 'signin') {
         try {
           const user = await manager.signinRedirectCallback();
-          publish({ user: user.expired ? null : user, busy: false, error: user.expired ? 'Tokenul a expirat.' : null });
+          publish({ user: user.expired ? null : user, pending: null, error: user.expired ? 'Tokenul a expirat.' : null });
         } finally { history.replaceState({}, '', '/'); }
       } else if (kind === 'signout') {
         try { await manager.signoutRedirectCallback(); }
         finally { history.replaceState({}, '', '/'); }
-        publish({ user: null, busy: false, error: null });
+        publish({ user: null, pending: null, error: null });
       } else {
-        publish({ user: null, busy: false, error: null });
+        publish({ user: null, pending: null, error: null });
       }
       await manager.clearStaleState();
     } catch {
       await manager.removeUser();
-      publish({ user: null, busy: false, error: 'Autentificarea nu s-a încheiat. Reîncearcă autentificarea.' });
+      publish({ user: null, pending: null, error: 'Autentificarea nu s-a încheiat. Reîncearcă autentificarea.' });
     }
   })();
   return initialization;

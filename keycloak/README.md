@@ -33,6 +33,12 @@ Schimbă TTL-ul din Realm settings → Tokens pentru alte măsurători. Obține 
 
 Importul se execută numai dacă realm-ul nu există. O modificare în export sau regenerarea parolelor din `.env` nu suprascrie un realm existent. Aplică modificările în Admin Console sau resetează explicit volumele demonstrative, cu pierderea datelor.
 
+Exportul activează înregistrarea pentru instalările noi. Pentru un realm
+`securesync` deja importat, activează **User registration** din **Realm settings
+→ Login**. Documente și Portal deschid formularul de înregistrare configurat în
+Keycloak. Conturile noi apar în **Administrare membri**, unde implementatorul
+le poate atribui rolurile aplicației și departamentul.
+
 Issuer-ul public este `http://localhost:8080/realms/securesync`. API-ul din Docker folosește `http://keycloak:8080` pentru JWKS și introspecție și verifică în continuare issuer-ul public. Aceste URL-uri au scopuri diferite.
 
 Pentru activarea administrării membrilor într-o instalare existentă, rulează `python scripts/configure-members.py` cu Keycloak pornit, apoi reconstruiește/recreează serviciile. Scriptul adaugă componentele necesare și doar un cont demonstrativ lipsă, păstrând conturile și PDF-urile existente. Vezi [administrarea membrilor](../docs/members.md).

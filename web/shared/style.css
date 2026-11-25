@@ -267,6 +267,10 @@ input::file-selector-button { border: 0; border-radius: 4px; padding: 5px 10px; 
 .probe.denied, .probe.expired { background: var(--probe-denied); }
 .probe.unreachable, .probe.error { background: var(--probe-neutral); }
 
+.welcome { display: grid; grid-template-columns: minmax(0, 1fr) min(44%, 400px); gap: 40px; align-items: center; padding: 44px 48px; }
+.welcome > div:first-child { max-width: 560px; }
+.welcome .small { margin: 20px 0 0; }
+
 /* 9. Ecrane înguste --------------------------------------------------------- */
 @media (max-width: 960px) {
   :root { --gutter: 22px; }
@@ -344,11 +348,7 @@ main > :nth-child(3) { animation-delay: 170ms; }
 main > :nth-child(4) { animation-delay: 240ms; }
 main > :nth-child(n+5) { animation-delay: 300ms; }
 
-/* Pagina de intrare */
-.welcome { display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, 400px); gap: 40px; align-items: center; padding: 44px 48px; }
-.welcome > div:first-child { max-width: 560px; }
-.welcome .small { margin: 20px 0 0; }
-
+/* Scena de pe pagina de intrare */
 .scene { perspective: 1000px; width: 100%; aspect-ratio: 1; justify-self: end; pointer-events: none; --rx: 0deg; --ry: 0deg; }
 .stage { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transform: rotateX(calc(16deg + var(--rx))) rotateY(calc(-26deg + var(--ry))); transition: transform .6s cubic-bezier(.2, .7, .2, 1); }
 .float { position: absolute; inset: 0; transform-style: preserve-3d; animation: bob 7s ease-in-out infinite; }

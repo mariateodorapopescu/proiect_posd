@@ -6,6 +6,8 @@ Web: npm ci, npm test (Node test/assert), npm run build (TypeScript+both Vite bu
 
 With the local stack running, npm run test:oidc in web/ uses the real oidc-client-ts request/callback handling and a local HTTP form transport to verify both clients, SSO, nonce and memory-only tokens. It complements protocol tests and does not replace visual browser verification. It reads only synthetic demo .env credentials and never prints tokens.
 
+`web/tests/auth-redirect.test.mjs` exercises the installed OIDC navigator with a simulated page restoration. It checks that login and registration can be retried after Back and that the PKCE transaction survives for Forward. In a browser, open login and the Keycloak registration form from each app and verify that both actions are enabled after returning.
+
 Experiment: python -m unittest discover -s experiment -p 'test_*.py' -v; Dockerfile runs same suite with Python3.12. CLI smoke --help and optional real data analysis. Never fabricate experimental results. experiment/test_batch.py covers batch.py with fake sessions: S256 PKCE, password only to the realm origin, state/code checks, stratified phase schedule, wait before the admin token, parallel writes and safe options. experiment/test_analysis_extended.py covers p99, ECDF, the denial-versus-remaining-lifetime pairs and the --ecdf-plot output.
 
 Full local stack: python scripts/verify-stack.py --strategy jwt|introspection --check-revocation. Reads only demo .env, authenticates with real Code+PKCE, verifies second-client SSO at protocol level, HTTP policies/PDF and revocation. Creates/deletes only its test document. This complements browser checks; don't describe the protocol script as browser UI testing.

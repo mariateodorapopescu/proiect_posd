@@ -299,6 +299,8 @@ Documentație tehnică pentru implementare:
 
 Tokenurile rămân în memoria paginii. După reîncărcare, autentificarea inițiază un nou redirect și poate reutiliza sesiunea SSO. TTL-ul de 60 s este scurt în mod intenționat pentru experiment; dacă expiră în timpul demonstrației, folosește din nou autentificarea.
 
+În Documente și Portal, butonul **Înregistrare** deschide formularul existent din Keycloak. După ce revii cu **Înapoi** din Keycloak, poți încerca imediat din nou. Pentru un cont nou, atribuie rolul și departamentul din [Administrare membri](docs/members.md).
+
 ## Documentație și validare
 
 Vezi [documentația proiectului](docs/README.md), [arhitectura](docs/architecture.md), [API](api/README.md), [Keycloak](keycloak/README.md), [aplicațiile web](web/README.md), [experimentul](experiment/README.md), [lansatorul Windows](docs/launcher.md) și [validarea executată](docs/validation.md).

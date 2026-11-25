@@ -50,6 +50,11 @@ autentificare. Un 401 pentru o cerere veche nu închide o sesiune mai nouă.
 După reîncărcare, tokenul din memorie dispare; butonul Autentificare inițiază un
 nou redirect, iar Keycloak poate refolosi sesiunea SSO.
 
+Butonul **Înregistrare** de lângă **Continuă cu Keycloak** deschide formularul
+existent din Keycloak prin același flux OIDC, cu `prompt=create`. Dacă revii
+cu **Înapoi** din formularul de login sau de înregistrare, butoanele devin
+din nou active. Keycloak trebuie să aibă [înregistrarea activată](../keycloak/README.md#persistență-și-configurare).
+
 Verificare manuală SSO: autentificare în Documente, deschidere Portal,
 Autentificare în Portal; Keycloak trebuie să revină fără solicitarea parolei.
 Verificare logout: Deconectare SSO apoi autentificare în cealaltă aplicație;

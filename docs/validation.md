@@ -175,3 +175,9 @@ Fișierele `runs.csv` sunt scrise în mod adăugare, deci rulările repetate în
 ### Ce nu a fost validat în această etapă
 
 Verificarea în browser a interfeței reproiectate (teme, monitor, Lighthouse) și un al treilea TTL (300 s) nu au fost executate la data acestei secțiuni.
+
+## Validare din 25 noiembrie 2026
+
+- Au trecut cele 30 de teste web, verificarea TypeScript și buildurile pentru Documente și Portal. Testul de regresie simulează revenirea cu Înapoi când browserul restaurează pagina și verifică păstrarea tranzacției PKCE pentru Înainte.
+- În browser, ambele aplicații au deschis formularele Keycloak de conectare și înregistrare. După revenirea cu Înapoi, acțiunile au fost din nou disponibile. `npm run test:oidc` a confirmat separat loginul și reutilizarea sesiunii SSO.
+- Un test HTTP local a trimis formularul de înregistrare cu un cont temporar, a schimbat codul prin PKCE și a apelat `/api/me` cu 200. Contul a primit 403 la listarea documentelor și a apărut în căutarea de membri a implementatorului cu rolurile aplicației și departamentul neatribuite. Contul temporar a fost șters.

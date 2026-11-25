@@ -4,6 +4,8 @@ Login redirects to Keycloak Authorization Code + PKCE; callback validates state 
 
 Each login sends an explicit random OIDC nonce, validated when oidc-client-ts processes the ID token. Documente requests openid documents:read documents:write; Portal additionally requests members:manage. Identity claims come from securesync-claims, so no unassigned profile scope is requested.
 
+Both welcome pages offer login and registration. Registration opens the existing Keycloak form through the same PKCE flow with `prompt=create`. When Back restores the page, the OIDC navigator resolves on `pageshow` and the pending action clears. The library keeps the temporary transaction available if the user moves Forward and finishes.
+
 Documente loads visible documents, posts multipart title+file, fetches downloads with Authorization and deletes only owner/admin documents. Portal shows authenticated /api/me claims and API probes. UI stale-request guards bind results to the captured session.
 
 Experiment obtains a token through browser PKCE or a private env/file token for one run, validates /api/me strategy/identity, probes200 baseline, obtains admin client_credentials, deletes exactly the sid session, timestamps successful204 and polls with unchanged token until five consecutive401/403. Network/5xx/unexpected responses are invalid, timeout censored. experiment/batch.py repeats this without a browser: fresh form login with PKCE per repetition, a stratified random wait of the token lifetime (--phase random, --seed), then the same measure_run; --workers adds parallelism and load. Switching profiles requires compose up --force-recreate api; restarting alone doesn't apply env changes.
