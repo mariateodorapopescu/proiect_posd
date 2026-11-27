@@ -43,6 +43,12 @@ Issuer-ul public este `http://localhost:8080/realms/securesync`. API-ul din Dock
 
 Pentru activarea administrării membrilor într-o instalare existentă, rulează `python scripts/configure-members.py` cu Keycloak pornit, apoi reconstruiește/recreează serviciile. Scriptul adaugă componentele necesare și doar un cont demonstrativ lipsă, păstrând conturile și PDF-urile existente. Vezi [administrarea membrilor](../docs/members.md).
 
+## Tema de login
+
+`themes/securesync/login` pornește de la `keycloak.v2` și preia din `web/shared/style.css` tokenii de culoare (light/dark), sticla cu margine vizibilă, luminile difuze, cheia din siglă, razele de 10 px și 26 px, butoanele și alertele „notice”. Cookie-ul `securesync-theme` setat de aplicații alege tema luminoasă sau întunecată, inclusiv atunci când sistemul are cealaltă temă. Fundalul se pune numai pe `html`, altfel `body` ar acoperi luminile. Dacă schimbi valorile de culoare din `style.css`, actualizează și `securesync.css`.
+
+Compose montează tema read-only, iar `start-dev` nu o ține în cache: după o modificare, reîncarcă pagina de login cu Ctrl+F5.
+
 ## Surse tehnice
 
 - [Keycloak Docker](https://www.keycloak.org/getting-started/getting-started-docker)

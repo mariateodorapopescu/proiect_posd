@@ -1,79 +1,185 @@
-/* Aceeași direcție ca aplicațiile (web/shared/style.css): sticlă, lumini difuze, cobalt.
-   Selectorii sunt ai temei keycloak.v2 (PatternFly v5); !important doar unde tema de bază îl folosește. */
+/* Aceeași direcție ca aplicațiile (web/shared/style.css): sticlă, lumini difuze, cobalt, cheia din siglă.
+   Tokenii --ss-* oglindesc tokenii din aplicații (aceleași valori, aceeași pereche light/dark).
+   Selectorii sunt ai temei keycloak.v2 (PatternFly v5); !important doar unde tema de bază îl folosește
+   (de exemplu culoarea albă a #kc-header-wrapper) sau unde PatternFly pune stiluri pe pseudo-elemente. */
+
+/* 1. Tokeni ---------------------------------------------------------------- */
 :root {
-  --ss-bg: #f4f1f8; --ss-surface: #ffffff; --ss-ink: #151832; --ss-muted: #4f5473;
-  --ss-accent: #2433c9; --ss-accent-hover: #1a26a3; --ss-on-accent: #ffffff;
-  --ss-border: #9ba0c0; --ss-edge: #7d82a6; --ss-signal: #ffd84d; --ss-focus: #b3261e;
+  --ss-bg: #f4f1f8; --ss-surface: #ffffff; --ss-surface-muted: #e7e9f3; --ss-ink: #151832; --ss-muted: #4f5473;
+  --ss-accent: #2433c9; --ss-accent-hover: #1a26a3; --ss-on-accent: #ffffff; --ss-rail: #2433c9;
+  --ss-border: #9ba0c0; --ss-divider: #d5d8e8; --ss-edge: #7d82a6; --ss-signal: #ffd84d; --ss-focus: #b3261e;
   --ss-orb-a: #97a6ff; --ss-orb-b: #ffc4a3; --ss-orb-c: #a9e3ff;
+  --ss-error-bg: #fbe6e2; --ss-error-border: #e2a79d; --ss-error-text: #7d1c10; --ss-error-bar: #a8281a;
+  --ss-success-bg: #e3f3e8; --ss-success-border: #8fc9a2; --ss-success-text: #14532d; --ss-success-bar: #1f7a45;
+  --ss-info-bg: #e4e8fa; --ss-info-border: #aab4ec; --ss-info-text: #1f2a7a;
+  --ss-warn-bg: #fff4cf; --ss-warn-border: #e3c765; --ss-warn-text: #5a4600; --ss-warn-bar: #b08900;
+  --ss-radius-s: 10px; --ss-radius-l: 26px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-ss-theme="light"]) { color-scheme: dark; }
+}
+:root[data-ss-theme="dark"] { color-scheme: dark; }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-ss-theme="light"]) {
+    --ss-bg: #0b0e1f; --ss-surface: #171b30; --ss-surface-muted: #1f2440; --ss-ink: #eceefc; --ss-muted: #a9afd0;
+    --ss-accent: #9aa6ff; --ss-accent-hover: #bcc4ff; --ss-on-accent: #0e1120; --ss-rail: #151c63;
+    --ss-border: #4d5580; --ss-divider: #2b3150; --ss-edge: #6a7399; --ss-focus: #ffd84d;
+    --ss-orb-a: #2a38d4; --ss-orb-b: #6a2fc4; --ss-orb-c: #0c7a9e;
+    --ss-error-bg: #3a1d24; --ss-error-border: #7d3a40; --ss-error-text: #ffc2b6; --ss-error-bar: #b8392b;
+    --ss-success-bg: #12301f; --ss-success-border: #2f6b47; --ss-success-text: #a8e6bf; --ss-success-bar: #1f7a45;
+    --ss-info-bg: #1c2348; --ss-info-border: #3c4a8f; --ss-info-text: #cfd5ff;
+    --ss-warn-bg: #3a3010; --ss-warn-border: #7a6420; --ss-warn-text: #ffe9a3; --ss-warn-bar: #d4a90a;
+  }
+}
+:root[data-ss-theme="dark"] {
+  --ss-bg: #0b0e1f; --ss-surface: #171b30; --ss-surface-muted: #1f2440; --ss-ink: #eceefc; --ss-muted: #a9afd0;
+  --ss-accent: #9aa6ff; --ss-accent-hover: #bcc4ff; --ss-on-accent: #0e1120; --ss-rail: #151c63;
+  --ss-border: #4d5580; --ss-divider: #2b3150; --ss-edge: #6a7399; --ss-focus: #ffd84d;
+  --ss-orb-a: #2a38d4; --ss-orb-b: #6a2fc4; --ss-orb-c: #0c7a9e;
+  --ss-error-bg: #3a1d24; --ss-error-border: #7d3a40; --ss-error-text: #ffc2b6; --ss-error-bar: #b8392b;
+  --ss-success-bg: #12301f; --ss-success-border: #2f6b47; --ss-success-text: #a8e6bf; --ss-success-bar: #1f7a45;
+  --ss-info-bg: #1c2348; --ss-info-border: #3c4a8f; --ss-info-text: #cfd5ff;
+  --ss-warn-bg: #3a3010; --ss-warn-border: #7a6420; --ss-warn-text: #ffe9a3; --ss-warn-bar: #d4a90a;
+}
+
+/* PatternFly citește culorile din variabilele lui; le legăm de tokenii aplicației. :root bate :where(.pf-v5-theme-dark). */
+:root {
+  --pf-v5-global--Color--100: var(--ss-ink);
+  --pf-v5-global--Color--200: var(--ss-muted);
   --pf-v5-global--primary-color--100: var(--ss-accent);
   --pf-v5-global--primary-color--200: var(--ss-accent-hover);
   --pf-v5-global--link--Color: var(--ss-accent);
   --pf-v5-global--link--Color--hover: var(--ss-accent-hover);
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-ss-theme="light"]) {
-    --ss-bg: #0b0e1f; --ss-surface: #171b30; --ss-ink: #eceefc; --ss-muted: #a9afd0;
-    --ss-accent: #9aa6ff; --ss-accent-hover: #bcc4ff; --ss-on-accent: #0e1120;
-    --ss-border: #4d5580; --ss-edge: #6a7399; --ss-focus: #ffd84d;
-    --ss-orb-a: #2a38d4; --ss-orb-b: #6a2fc4; --ss-orb-c: #0c7a9e;
-  }
-}
-:root[data-ss-theme="dark"], :root.pf-v5-theme-dark:not([data-ss-theme="light"]) {
-  --ss-bg: #0b0e1f; --ss-surface: #171b30; --ss-ink: #eceefc; --ss-muted: #a9afd0;
-  --ss-accent: #9aa6ff; --ss-accent-hover: #bcc4ff; --ss-on-accent: #0e1120;
-  --ss-border: #4d5580; --ss-edge: #6a7399; --ss-focus: #ffd84d;
-  --ss-orb-a: #2a38d4; --ss-orb-b: #6a2fc4; --ss-orb-c: #0c7a9e;
+  --pf-v5-global--BorderColor--100: var(--ss-divider);
+  --keycloak-card-top-color: transparent;
 }
 
-html, body, .pf-v5-c-login {
-  background: var(--ss-bg) !important; color: var(--ss-ink);
+/* 2. Fundal: lumini difuze, ca în aplicații ---------------------------------
+   Fundalul se pune doar pe <html>. Dacă <body> sau .pf-v5-c-login ar avea fundal opac,
+   ar acoperi luminile (z-index -1), cum se întâmpla înainte. */
+html { background: var(--ss-bg) !important; }
+body, .pf-v5-c-login, .pf-v5-c-login__container { background: transparent !important; }
+html, body {
+  color: var(--ss-ink);
   font-family: "Avenir Next", "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif;
 }
-.pf-v5-c-login { background: transparent !important; }
-.pf-v5-c-login__container { background: none !important; }
-
-/* Lumini difuze în spatele panoului, ca în aplicații */
-html::before, html::after { content: ""; position: fixed; z-index: -1; border-radius: 50%; filter: blur(90px); opacity: .6; pointer-events: none; will-change: transform; }
+html::before, html::after, body::before {
+  content: ""; position: fixed; z-index: -1; border-radius: 50%; filter: blur(90px); opacity: .6;
+  pointer-events: none; will-change: transform;
+}
 html::before { width: 52vw; height: 52vw; left: -12vw; top: -16vw; background: var(--ss-orb-a); animation: ss-drift-a 28s ease-in-out infinite; }
-html::after { width: 44vw; height: 44vw; right: -10vw; bottom: -14vw; background: var(--ss-orb-b); animation: ss-drift-b 34s ease-in-out infinite; }
+html::after  { width: 44vw; height: 44vw; right: -10vw; top: 8vh; background: var(--ss-orb-b); animation: ss-drift-b 34s ease-in-out infinite; }
+body::before { width: 40vw; height: 40vw; left: 28vw; bottom: -18vw; background: var(--ss-orb-c); animation: ss-drift-c 31s ease-in-out infinite; }
 @keyframes ss-drift-a { 50% { transform: translate3d(9vw, 7vh, 0) scale(1.14); } }
-@keyframes ss-drift-b { 50% { transform: translate3d(-8vw, -9vh, 0) scale(.9); } }
+@keyframes ss-drift-b { 50% { transform: translate3d(-8vw, 10vh, 0) scale(.9); } }
+@keyframes ss-drift-c { 50% { transform: translate3d(7vw, -9vh, 0) scale(1.12); } }
 
-/* Panoul de autentificare: sticlă cu margine vizibilă */
+/* 3. Antet: cheia și numele, ca baza barei laterale ------------------------ */
+#kc-header-wrapper {
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  font-size: 26px; font-weight: 800; letter-spacing: -.6px; text-transform: none; line-height: 1.2;
+  color: var(--ss-ink) !important; /* tema de bază o pune albă cu !important */
+}
+#kc-header-wrapper::before {
+  content: ""; flex-shrink: 0; width: 42px; height: 42px; border-radius: 14px;
+  background: var(--ss-rail) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='none' stroke='%23ffd84d' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='10' cy='10' r='6'/%3E%3Cpath d='M14.5 14.5 28 28M22.5 22.5l3-3M26 26l3-3'/%3E%3C/svg%3E") center / 26px 26px no-repeat;
+  border: 1px solid rgba(255, 255, 255, .38);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), 0 14px 26px -14px var(--ss-rail);
+}
+
+/* 4. Panoul de autentificare: sticlă cu margine vizibilă --------------------- */
 .pf-v5-c-login__main {
-  background: color-mix(in oklab, var(--ss-surface) 66%, transparent) !important; color: var(--ss-ink);
-  border: 1px solid var(--ss-edge); border-radius: 26px !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5), 0 34px 70px -34px rgba(21, 24, 50, .55) !important;
+  background: color-mix(in oklab, var(--ss-surface) 64%, transparent) !important; color: var(--ss-ink);
+  border: 1px solid var(--ss-edge); border-radius: var(--ss-radius-l) !important; overflow: hidden;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .55), 0 30px 60px -36px color-mix(in oklab, var(--ss-ink) 50%, transparent) !important;
   -webkit-backdrop-filter: blur(18px) saturate(1.3); backdrop-filter: blur(18px) saturate(1.3);
   animation: ss-rise .8s cubic-bezier(.2, .7, .2, 1) both;
 }
 @supports not (backdrop-filter: blur(1px)) { .pf-v5-c-login__main { background: var(--ss-surface) !important; } }
 @keyframes ss-rise { from { opacity: 0; transform: translateY(18px); } }
+.pf-v5-c-login__main-header { border-top: 0 !important; } /* banda albastră de 4px din keycloak.v2 */
+.pf-v5-c-login__main-footer { background: transparent; }
+.pf-v5-c-login__main-footer-band { border-top: 1px solid var(--ss-divider) !important; background: transparent !important; color: var(--ss-muted); }
+.pf-v5-c-login__main-footer-band::before, .pf-v5-c-login__main-footer::before { border-color: var(--ss-divider); }
 
-#kc-header-wrapper, .pf-v5-c-login__header, .kc-login-logo {
-  font-size: 28px; font-weight: 800; color: var(--ss-ink); text-transform: none; letter-spacing: -.6px;
-}
 #kc-page-title, .pf-v5-c-login__main-header h1 {
-  font-weight: 800; letter-spacing: -.8px; color: var(--ss-ink); background: none; display: block;
+  font-size: clamp(28px, 4vw, 36px); font-weight: 800; letter-spacing: -1.2px; line-height: 1.1; color: var(--ss-ink); background: none; display: block;
 }
-label, .pf-v5-c-form__label-text { font-size: 14px; font-weight: 650; color: var(--ss-ink); }
-.pf-v5-c-form-control, .pf-v5-c-form-control input {
-  border: 1px solid var(--ss-border) !important; border-radius: 12px !important;
-  background: color-mix(in oklab, var(--ss-surface) 82%, transparent); color: var(--ss-ink);
+.pf-v5-c-form__helper-text, .pf-v5-c-helper-text__item-text { color: var(--ss-muted); }
+hr, .kc-login-divider::before, .kc-login-divider::after { border-color: var(--ss-divider); }
+
+/* 5. Formulare: aceleași raze și margini ca în aplicații --------------------- */
+label, .pf-v5-c-form__label, .pf-v5-c-form__label-text { font-size: 14px; font-weight: 650; color: var(--ss-ink); }
+.pf-v5-c-form-control {
+  border-radius: var(--ss-radius-s) !important; overflow: hidden;
+  background: color-mix(in oklab, var(--ss-surface) 82%, transparent) !important; color: var(--ss-ink);
+  --pf-v5-c-form-control--BorderColor: var(--ss-border);
+  --pf-v5-c-form-control--BorderRadius: var(--ss-radius-s);
+}
+/* Chenarul stă pe <span>, nu și pe <input>, ca să nu apară dublu. */
+.pf-v5-c-form-control { border: 1px solid var(--ss-border) !important; }
+.pf-v5-c-form-control > input, .pf-v5-c-form-control > select, .pf-v5-c-form-control > textarea {
+  border: 0 !important; background: transparent !important; color: var(--ss-ink); padding: 11px 14px; line-height: 1.4;
 }
 .pf-v5-c-form-control::before, .pf-v5-c-form-control::after { display: none !important; }
+.pf-v5-c-form-control:focus-within { border-color: var(--ss-accent) !important; box-shadow: 0 0 0 1px var(--ss-accent); }
+.pf-v5-c-form-control.pf-m-error, .pf-v5-c-form-control[aria-invalid="true"] { border-color: var(--ss-error-bar) !important; }
+.pf-v5-c-form-control > input:focus-visible { outline: none; } /* focusul se vede pe chenar */
+
+.pf-v5-c-input-group { gap: 8px; }
+.pf-v5-c-button.pf-m-control {
+  background: transparent; color: var(--ss-ink); border: 1px solid var(--ss-border) !important; border-radius: var(--ss-radius-s) !important;
+}
+.pf-v5-c-button.pf-m-control::before, .pf-v5-c-button.pf-m-control::after { display: none !important; }
+.pf-v5-c-button.pf-m-control:hover { background: var(--ss-surface-muted); border-color: var(--ss-ink) !important; }
+.pf-v5-c-check__input { accent-color: var(--ss-accent); }
+
+/* 6. Butoane ---------------------------------------------------------------- */
+.pf-v5-c-button { border-radius: var(--ss-radius-s); font-weight: 650; }
 .pf-v5-c-button.pf-m-primary {
   background: linear-gradient(180deg, color-mix(in oklab, var(--ss-accent) 86%, #fff), var(--ss-accent));
-  color: var(--ss-on-accent); border: 1px solid var(--ss-accent); border-radius: 12px; font-weight: 650;
+  color: var(--ss-on-accent); border: 1px solid var(--ss-accent); padding: 10px 18px; line-height: 1.4;
   transition: transform .2s cubic-bezier(.2, .7, .2, 1), box-shadow .2s, background-color .2s;
 }
-.pf-v5-c-button.pf-m-primary:hover { background: var(--ss-accent-hover); border-color: var(--ss-accent-hover); transform: translateY(-1px); box-shadow: 0 10px 22px -12px var(--ss-accent); }
+.pf-v5-c-button.pf-m-primary::after { border: 0; }
+.pf-v5-c-button.pf-m-primary:hover { background: var(--ss-accent-hover); border-color: var(--ss-accent-hover); color: var(--ss-on-accent); transform: translateY(-1px); box-shadow: 0 10px 22px -12px var(--ss-accent); }
 .pf-v5-c-button.pf-m-primary:active { transform: none; box-shadow: none; }
+.pf-v5-c-button.pf-m-secondary, .pf-v5-c-button.pf-m-tertiary {
+  background: transparent; color: var(--ss-ink); border: 1px solid var(--ss-border); padding: 10px 18px;
+  --pf-v5-c-button--m-secondary--after--BorderColor: transparent;
+  --pf-v5-c-button--m-tertiary--after--BorderColor: transparent;
+}
+.pf-v5-c-button.pf-m-secondary::after, .pf-v5-c-button.pf-m-tertiary::after { border: 0 !important; }
+.pf-v5-c-button.pf-m-secondary:hover, .pf-v5-c-button.pf-m-tertiary:hover { background: var(--ss-surface-muted); border-color: var(--ss-ink); color: var(--ss-ink); }
+.pf-v5-c-button.pf-m-link { color: var(--ss-accent); }
 a { color: var(--ss-accent); text-underline-offset: 3px; }
-.pf-v5-c-alert { border-radius: 12px; }
+a:hover { color: var(--ss-accent-hover); }
+
+/* 7. Alerte: ca „notice” din aplicații (bară colorată în stânga) --------------- */
+.pf-v5-c-alert {
+  --ss-alert-bg: var(--ss-info-bg); --ss-alert-border: var(--ss-info-border); --ss-alert-text: var(--ss-info-text); --ss-alert-bar: var(--ss-accent);
+  background: var(--ss-alert-bg); color: var(--ss-alert-text);
+  border: 1px solid var(--ss-alert-border); border-left: 5px solid var(--ss-alert-bar); border-radius: var(--ss-radius-s);
+  box-shadow: none; font-size: 15px;
+}
+.pf-v5-c-alert::before, .pf-v5-c-alert::after { display: none !important; }
+.pf-v5-c-alert.pf-m-danger  { --ss-alert-bg: var(--ss-error-bg); --ss-alert-border: var(--ss-error-border); --ss-alert-text: var(--ss-error-text); --ss-alert-bar: var(--ss-error-bar); }
+.pf-v5-c-alert.pf-m-success { --ss-alert-bg: var(--ss-success-bg); --ss-alert-border: var(--ss-success-border); --ss-alert-text: var(--ss-success-text); --ss-alert-bar: var(--ss-success-bar); }
+.pf-v5-c-alert.pf-m-warning { --ss-alert-bg: var(--ss-warn-bg); --ss-alert-border: var(--ss-warn-border); --ss-alert-text: var(--ss-warn-text); --ss-alert-bar: var(--ss-warn-bar); }
+.pf-v5-c-alert__icon, .pf-v5-c-alert__title, .pf-v5-c-alert__description { color: var(--ss-alert-text); }
+
 :focus-visible { outline: 3px solid var(--ss-focus); outline-offset: 2px; }
+::selection { background: var(--ss-signal); color: #151832; }
+
+/* 8. Ecrane înguste ----------------------------------------------------------- */
+@media (max-width: 560px) {
+  #kc-header-wrapper { font-size: 22px; gap: 10px; }
+  #kc-header-wrapper::before { width: 36px; height: 36px; border-radius: 12px; background-size: 22px 22px; }
+}
 
 @media (prefers-reduced-motion: reduce) {
-  html::before, html::after, .pf-v5-c-login__main { animation: none !important; }
+  html::before, html::after, body::before, .pf-v5-c-login__main { animation: none !important; }
   .pf-v5-c-button.pf-m-primary { transition: none; }
 }
